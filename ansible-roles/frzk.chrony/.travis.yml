@@ -1,0 +1,30 @@
+---
+language: python
+services:
+  - docker
+
+# Build matrix
+env:
+  global:
+    - ROLENAME=chrony
+  matrix:
+    - MOLECULE_DISTRIB=centos7
+    - MOLECULE_DISTRIB=debian9
+    - MOLECULE_DISTRIB=ubuntu16.04
+    - MOLECULE_DISTRIB=ubuntu18.04
+    - MOLECULE_DISTRIB=archlinux
+
+install:
+  - pip install molecule docker
+
+before_script:
+  - cd ..
+  - mv ansible-role-$ROLENAME frzk.$ROLENAME
+  - cd frzk.$ROLENAME
+
+script:
+  - molecule --debug test
+
+notifications:
+  webhooks: https://galaxy.ansible.com/api/v1/notifications/
+...

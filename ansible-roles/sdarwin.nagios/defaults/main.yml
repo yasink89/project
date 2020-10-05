@@ -1,0 +1,170 @@
+---
+# defaults file for nagios
+nrpe_plugin_dir: /usr/lib/nagios/plugins
+
+# Directory that will be used as the location for the downloads§
+nagios_download_dir: "{{ ansible_env.HOME }}/nagios"
+
+nagios_admins_group: 'sysadmin'
+#nagios_users_group: 'users'
+
+nagios_version: 4.4.2
+nagios_plugins_version: 2.2.1
+nrpe_version: 3.2.1
+
+# Define the download url for the Nagios Core source files and the version you want to use.
+nagios_url: "https://assets.nagios.com/downloads/nagioscore/releases/nagios-{{ nagios_version }}.tar.gz"
+
+# This is the directory where the Nagios source files will be placed, this should be
+# the directory which is created when the download file is unpacked when runnint
+# tar -xzvf nagios-4.1.1.tar.gz
+nagios_src: "nagios-{{ nagios_version }}"
+
+# Define the download url for the Plugins and the version you want to use.
+nagios_pluginsurl: "http://www.nagios-plugins.org/download/nagios-plugins-{{ nagios_plugins_version }}.tar.gz"
+# This is the directory where the Plugin source files will be placed, this should be
+# the directory which is created when the download file is unpacked when runnint
+# tar -xzvf nagios-plugins-2.1.1.tar.gz
+nagios_pluginssrc: "nagios-plugins-{{ nagios_plugins_version }}"
+
+nagios_monitoring_user: nagios
+nagios_monitoring_command_group: nagcmd
+
+# This is a list of users allowed to login to the nagios web frontend
+nagios_users:
+  - user: nagiosadmin
+    pass: password
+
+#### nrpe-client ####
+
+# Directory that will be used as the location for the download
+#actually, already defined above.
+#download_dir: "{{ ansible_env.HOME }}/nrpe"
+
+# This NRPE package is only used for the plugin, as the nrpe plugin on some distributions
+# require the distributions Nagios package to be installed.
+#nrpe_url: "http://sourceforge.net/projects/nagios/files/nrpe-{{ nrpe_version | regex_replace('(\\d+)\\..*', '\\1') }}.x/nrpe-{{ nrpe_version }}/nrpe-{{ nrpe_version }}.tar.gz"
+#nrpe_url: "https://downloads.sourceforge.net/project/nagios/nrpe-{{ nrpe_version | regex_replace('(\\d+)\\..*', '\\1') }}.x/nrpe-{{ nrpe_version }}.tar.gz"
+nrpe_url: "https://downloads.sourceforge.net/project/nagios/nrpe-{{ nrpe_version | regex_replace('(\\d+)\\..*', '\\1') }}.x//nrpe-{{ nrpe_version }}/nrpe-{{ nrpe_version }}.tar.gz"
+nrpe_src: "nrpe-{{ nrpe_version }}"
+
+# Location of monitoring plugins
+nrpe_client_plugins_dir: /usr/local/nagios/libexec
+
+#### CONFIGS #######
+
+# base directory for nagios installation
+nagios_base_dir: /usr/local/nagios
+
+# nagios object directory
+nagios_object_dir: "{{nagios_base_dir}}/etc/objects"
+
+# if true, nagios_object_dir is a cfg_dir and nagios will
+# autoload all files ending in .cfg
+nagios_cfg_dir_enabled: false
+
+# id of nagios user
+nagios_user: nagios
+
+# id of nagios group
+nagios_group: nagios
+
+#define service checks per hostgroup here. Groups themselves are created by the ansible inventory.
+nagios_host_groups:
+  - name: 'all'
+    checks:
+      - {command: 'check_ssh', description: 'SSH Service Check'}
+      - {command: 'check_disk', description: 'Check Disk Space'}
+      #- {command: 'check_swap', description: 'Check Swap Space'}
+      - {command: 'check_load', description: 'Check Load'}
+      - {command: 'check_mem', description: 'Check Memory'}
+  #- name: 'webservers'
+  #  checks:
+  #    - {command: 'check_http', description: 'Check HTTP'}
+
+#define service checks per host here. Hosts themselves are created by the ansible inventory.
+nagios_hosts: ""
+#nagios_hosts:
+#  - name: 'web1'
+#    checks:
+#      - {command: 'check_http', description: 'check website'}
+
+nagios_commands:
+  #check_ssh is already in the default installation
+  #- {name: 'check_ssh', command: '$USER1$/check_ssh $ARG1$ $HOSTADDRESS$'}
+  - {name: 'check_disk', command: '$USER1$/check_nrpe -H $HOSTADDRESS$ -c check_disk'}
+  - {name: 'check_load', command: '$USER1$/check_nrpe -H $HOSTADDRESS$ -c check_load'}
+  - {name: 'check_swap', command: '$USER1$/check_nrpe -H $HOSTADDRESS$ -c check_swap'}
+  - {name: 'check_mem', command: '$USER1$/check_nrpe -H $HOSTADDRESS$ -c check_mem'}
+
+nagios_cgi_show_context_help: 1
+nagios_cgi_authorized_for_system_information: '*'
+nagios_cgi_authorized_for_configuration_information: '*'
+nagios_cgi_authorized_for_system_commands: '*'
+nagios_cgi_authorized_for_all_services: '*'
+nagios_cgi_authorized_for_all_hosts: '*'
+nagios_cgi_authorized_for_all_service_commands: '*'
+nagios_cgi_authorized_for_all_host_commands: '*'
+nagios_cgi_default_statusmap_layout: 5
+nagios_cgi_default_statuswrl_layout: 4
+nagios_cgi_result_limit: 100
+nagios_cgi_escape_html_tags: 0
+nagios_cgi_action_url_target: '_blank'
+nagios_cgi_notes_url_target: '_blank'
+nagios_cgi_lock_author_names: 1
+nagios_server_name: nagios
+nagios_conf_dir: "{{nagios_base_dir}}/etc"
+nagios_docroot: "{{nagios_base_dir}}/share"
+nagios_server_vname: nagios
+nagios_plugin_dir: "{{nagios_base_dir}}/libexec"
+nagios_cache_dir: "{{nagios_base_dir}}/var"
+nagios_service_name: nagios
+
+#### nrpe checks ####
+
+nrpe_checks:
+  check_load:
+    command: "{{nrpe_plugin_dir}}/check_load"
+    warning_condition: "{{ ansible_processor_count }},{{ ansible_processor_count * 3 / 4 }},{{ ansible_processor_count / 2 }}"
+    critical_condition: "{{ ansible_processor_count * 2 }},{{ ansible_processor_count * 3 / 2 }},{{ ansible_processor_count }}"
+  check_disk:
+    command: "{{nrpe_plugin_dir}}/check_disk"
+    warning_condition: '20%'
+    critical_condition: '10%'
+    parameters: "-A -i '.gvfs' -i /run/user -i /run/lxcfs -i /run/docker -i /var/lib/docker -i /var/lib/kubelet -i '/snap/*'"
+  check_swap:
+    command: "{{nrpe_plugin_dir}}/check_swap"
+    warning_condition: '30%'
+    critical_condition: '20%'
+  check_mem:
+    command: "{{nrpe_plugin_dir}}/check_mem"
+    warning_condition: '70'
+    critical_condition: '80'
+
+nagios_hosts_ignore: ""
+nagios_groups_ignore: ""
+
+# nagios_allowed_hosts will automatically include the "monitoring-servers" as well
+nagios_allowed_hosts:
+  - 127.0.0.1,10.0.0.211
+  - ::1
+
+# Set this to remove the Ansible "all" group. In that case, be sure to add at least one new Ansible group, and one new service check in the nagios_host_groups variable
+#nagios_remove_all_group: "yes"
+nagios_remove_all_group: "no"
+
+#Probably leave this as-is. It should match your top-level ansible playbook, such as "- hosts: monitoring-servers"
+nagios_monitoring_servers_group_name: "monitoring-servers"
+
+#optionally define more timeperiods.
+nagios_timeperiods: ""
+#nagios_timeperiods:
+#  - name: "webchecks"
+#    alias: "webchecks"
+#    sunday: "00:00-06:00,06:15-07:00,07:15-08:00,08:15-24:00"
+#    monday: "00:00-06:00,06:15-07:00,07:15-08:00,08:15-24:00"
+#    tuesday: "00:00-06:00,06:15-07:00,07:15-08:00,08:15-24:00"
+#    wednesday: "00:00-06:00,06:15-07:00,07:15-08:00,08:15-24:00"
+#    thursday: "00:00-06:00,06:15-07:00,07:15-08:00,08:15-24:00"
+#    friday: "00:00-06:00,06:15-07:00,07:15-08:00,08:15-24:00"
+#    saturday: "00:00-06:00,06:15-07:00,07:15-08:00,08:15-24:00"

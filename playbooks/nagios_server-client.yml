@@ -1,0 +1,52 @@
+---
+- hosts: nagios
+  become: yes
+  remote_user: ansible
+  tasks:
+    - name: Copy hostname file to nagios
+      copy:
+        src: /tmp/hostname.txt
+        dest: /tmp/hostname.txt
+    - name: hostname var
+      shell: cat /tmp/hostname.txt
+      register: hostname
+
+    - name: Server hosts.cfg config file
+      blockinfile:
+        path: /usr/local/nagios/etc/objects/hosts.cfg
+        block: |
+          define host{
+            use         base-host
+            host_name   {{ hostname }}
+            alias       {{ hostname }}
+            address     {{ hostname }}
+            }
+
+    - name: Server services.cfg config file
+      blockinfile:
+        path: /usr/local/nagios/etc/objects/services.cfg
+        block: |
+          define service {
+            use                    local-service;
+            host_name              {{ hostname }}
+            service_description    SSH Service Check;
+            check_command          check_ssh;
+            }
+
+
+    - name: Server services.cfg config file
+      blockinfile:
+        path: /usr/local/nagios/etc/objects/services.cfg
+        block: |
+          define service {
+            use                    local-service;
+            host_name              {{ hostname }}
+            service_description    PING
+            check_command          check_ping!100.0,20%!500.0,60%
+            }
+
+    - name: Reload nagios
+      service:
+        name: nagios
+        state: restarted
+

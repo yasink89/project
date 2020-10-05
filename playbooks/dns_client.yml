@@ -1,0 +1,23 @@
+
+  - name: Add to flz record
+    shell: echo "$(hostname | cut -d. -f1)  IN      A      $(hostname -I | cut -d' ' -f1)" > /tmp/flz.txt
+    args:
+      creates: /tmp/flz.txt
+
+  - name: Add to rlz record
+    shell: echo "$(hostname -I | cut -d' ' -f1 | cut -d. -f4)         IN      PTR   $(hostname)." > /tmp/rlz.txt
+    args:
+      creates: /tmp/rlz.txt
+
+  - name: Copy to local
+    fetch:
+      src: /tmp/flz.txt
+      dest: /tmp/
+      flat: yes
+
+  - name: Copy to local
+    fetch:
+      src: /tmp/rlz.txt
+      dest: /tmp/
+      flat: yes
+

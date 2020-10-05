@@ -1,0 +1,9 @@
+---
+- name: use geerlingguy.php role
+  hosts: jenkins-slave
+  user: ansible
+  become: true
+
+  roles:
+    -  geerlingguy.php
+

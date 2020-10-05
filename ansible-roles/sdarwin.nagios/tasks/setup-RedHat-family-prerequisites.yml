@@ -1,0 +1,33 @@
+---
+
+- name: install epel repo
+  yum:
+    name: "{{ epel_repo_url }}"
+    state: present
+  tags:
+    - epel
+  when: ansible_os_family == 'RedHat'
+
+- name: import epel gpg key
+  rpm_key:
+    key: "{{ epel_repo_gpg_key_path }}"
+    state: present
+  tags:
+    - epel
+  when: ansible_os_family == 'RedHat'
+
+- name: install apache
+  yum:
+    name: ['php', 'httpd', 'libsemanage-python', 'libselinux-python']
+
+- name: Install Nagios prerequisites for CentOS
+  yum:
+    name: ['wget', 'gcc', 'glibc', 'glibc-common', 'gd', 'gd-devel', 'make', 'perl', 'perl-devel', 'wget', 'python-passlib', 'unzip']
+
+- name: Install plugin prerequisites for CentOS
+  yum:
+    name: "{{ nagios_plugin_packages }}"
+
+- name: Install NRPE prerequisites
+  yum:
+    name: ['gcc', 'glibc', 'glibc-common', 'make', 'openssl-devel']

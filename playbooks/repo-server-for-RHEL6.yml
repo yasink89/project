@@ -1,0 +1,48 @@
+---
+- name: Install repo
+  hosts: ftpserver
+  become: yes
+  tasks: 
+    - name: create repository
+      yum: 
+        name: createrepo
+        state: present
+    - name: Ensure yum-utils installed
+      yum: 
+        name: yum-utils
+    - name: create FTP directory if not exist
+      file: 
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0755
+      with_items:
+      - /var/ftp/repo
+      
+  vars: 
+    - source_iso: "/images/CentOS-6.9-x86_64-minimal.iso"
+    - dest_iso: "/var/ftp/repo/CentOS-6.9-x86_64-minimal.iso"
+    - repo_mount: "/var/ftp/repo"
+  tasks:
+    - name: Upload the ISO file 
+      copy:
+        src: "{{ source_iso }}"
+        dest: "{{ dest_iso }}"
+        force: no
+        remote_src: yes
+           
+    - name: Mount the ISO file
+      mount: 
+        path: "{{ repo_mount }}"
+        src: "{{ dest_iso }}"
+        fstype: iso9660
+        opts: loop,ro
+        state: mounted
+    - name: Add Repository 
+      yum_repository:
+        name: Centoslocal
+        description: Local ISO depostory
+        baseurl: "file://{{ repo_mount }}"
+        enabled: yes
+        gpgcheck: no

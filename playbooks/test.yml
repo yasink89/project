@@ -1,0 +1,43 @@
+---
+- hosts: all
+  become: yes
+  remote_user: ansible
+  tasks:
+
+      
+    - name: raplace
+      replace:
+        path: /etc/auto.master
+        regexp: "^/home/users   /etc/auto.users"
+        replace: "/home/users   /etc/auto.users --timeout 60"
+
+    - name: restart service
+      service:
+        name: autofs
+        state: restarted
+
+#    - name: remove /home/guests
+#      shell: rm -rf /home/guests
+
+
+#     - name: remove
+#       yum:
+#         name: nfs*
+#         state: removed
+#
+#     - name: remove /share
+#       file:
+#         state: absent
+#         path: /share
+
+#
+#     - name: remove /share
+#       shell: rm -rf /share
+#
+#     - name: remove /nfs/share from /etc/fstab
+#       lineinfile:
+#         path: /etc/auto.users
+#         line: "*   -rw,sync 192.168.34.17:/rhome/&"
+#         state: absent
+#
+#

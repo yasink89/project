@@ -1,0 +1,34 @@
+---
+- name: NFS server
+  hosts: nfs
+  become: yes
+  remote_user: ansible
+  tasks:
+    - name: Install nfs
+      yum:
+        name: nfs-utils*
+        state: present
+
+    - name: Start and Enable nfs
+      service:
+        name: nfs
+        state: started
+        enabled: yes
+
+    - name: mkdir
+      file:
+        path: /share
+        state: directory
+        mode: '755'
+        owner: root
+        group: root
+
+    - name: exports file
+      lineinfile:
+        path: /etc/exports
+        line: '/share  192.168.34.0/24(rw,sync,no_root_squash)'
+        state: present
+
+    - name: exportfs
+      shell: exportfs -a
+

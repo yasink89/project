@@ -1,0 +1,115 @@
+---
+- hosts: test
+  become: yes
+  remote_user: ansible
+  roles:
+    - ntp-client
+  tasks:
+    - import_tasks: security.yml
+    - import_tasks: autofs.yml
+    - import_tasks: nfs_client.yml
+    - import_tasks: dns_client.yml
+    - import_tasks: ldap_client.yml
+    - import_tasks: nagios_client.yml
+
+
+
+## Playbooks to run in masters:
+
+- hosts: dnsm
+  become: yes
+  remote_user: ansible
+  tasks:
+    - name: Copy file to DNS server
+      copy:
+        src: /tmp/flz.txt
+        dest: /tmp/flz.txt
+
+    - name: Append to zones file
+      shell: cat /tmp/flz.txt >> /var/named/ziyotek3.flz
+
+    - name: Copy file to DNS server
+      copy:
+        src: /tmp/rlz.txt
+        dest: /tmp/rlz.txt
+
+    - name: Append to zones file
+      shell: cat /tmp/rlz.txt >> /var/named/ziyotek3.rlz
+
+    - name: date variable
+      shell: date +%Y%m%d
+      register: date
+
+    - name: serial change
+      lineinfile:
+        path: /var/named/ziyotek3.flz
+        regex: 'serial$'
+        line: '                                        {{ date.stdout }}   ; serial'
+
+    - name: serial change
+      lineinfile:
+        path: /var/named/ziyotek3.rlz
+        regex: 'serial$'
+        line: '                                        {{ date.stdout }}   ; serial'
+
+    - name: Reload named
+      service:
+        name: named
+        state: reloaded
+
+
+
+
+
+
+- hosts: nagios
+  become: yes
+  remote_user: ansible
+  tasks:
+    - name: Copy hostname file to nagios
+      copy:
+        src: /tmp/hostname.txt
+        dest: /tmp/hostname.txt
+    - name: hostname var
+      shell: cat /tmp/hostname.txt
+      register: hostname
+
+    - name: Server hosts.cfg config file
+      blockinfile:
+        path: /usr/local/nagios/etc/objects/hosts.cfg
+        block: |
+          define host{
+            use         base-host
+            host_name   {{ hostname.stdout }}
+            alias       {{ hostname.stdout }}
+            address     {{ hostname.stdout }}
+            }
+
+    - name: Server services.cfg config file
+      blockinfile:
+        path: /usr/local/nagios/etc/objects/services.cfg
+        block: |
+          define service {
+            use                    local-service;
+            host_name              {{ hostname.stdout }}
+            service_description    SSH Service Check;
+            check_command          check_ssh;
+            }
+          define service {
+            use                    local-service;
+            host_name              {{ hostname.stdout }}
+            service_description    PING
+            check_command          check_ping!100.0,20%!500.0,60%
+            }
+
+    - name: Reload nagios
+      service:
+        name: nagios
+        state: reloaded
+
+    - name: Restart nagios
+      service:
+        name: nagios
+        state: restarted
+
+

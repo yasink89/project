@@ -1,0 +1,35 @@
+# Nagios client
+    - name: Nagios Client Package
+      yum:
+        name: nrpe
+        state: present
+
+    - name: Nagios Client Package
+      yum:
+        name: nagios-plugins-all
+        state: present
+
+    - name: Conf file
+      lineinfile:
+        path: /etc/nagios/nrpe.cfg
+        regex: '^allowed_hosts=127.0.0.1'
+        line: 'allowed_hosts=127.0.0.1,192.168.34.30'
+        state: present
+
+    - name: Start and Enable nrpe
+      service:
+        name: nrpe
+        state: started
+        enabled: yes
+
+    - name: Get hostname
+      shell: echo "$(hostname)" > /tmp/hostname.txt
+      args:
+        creates: /tmp/hostname.txt
+
+    - name: Copy to local
+      fetch:
+        src: /tmp/hostname.txt
+        dest: /tmp/
+        flat: yes
+

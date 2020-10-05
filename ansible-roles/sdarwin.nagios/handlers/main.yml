@@ -1,0 +1,15 @@
+---
+- name: pauser
+  pause: seconds=2
+
+- name: restart apache
+  service: name={{ nagios_apache_service }} state=restarted
+
+- name: restart nagios
+  command: systemctl restart nagios.service
+  when: nagios_needs_restart !=0
+  become: true
+
+- name: restart nrpe
+  become: true
+  service: name={{ nrpe_service_name }} state=restarted

@@ -1,0 +1,23 @@
+---
+
+   - name: Make sure Packages Installed
+     yum:
+      name:
+        - openldap-clients
+        - nss-pam-ldapd
+        - authconfig
+      state: present
+
+   - name: cacerts directory
+     file:
+       state: directory
+       path: /etc/openldap/cacerts
+       mode: '0755'
+ 
+   - name: Get CA.crt from server
+     shell: wget http://prdx-ldap301.ziyotek3.local:/CA.crt 
+     args:
+       chdir: /etc/openldap/cacerts
+
+   - name: authconfig
+     shell: authconfig --enableldap --enableldapauth --enableldaptls --enablemkhomedir --ldapserver=prdx-ldap301.ziyotek3.local --ldapbasedn="dc=ziyotek3,dc=local" --update

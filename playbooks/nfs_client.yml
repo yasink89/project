@@ -1,0 +1,54 @@
+# NFS Client
+
+    - name: Install nfs-utils
+      yum:
+        name: nfs-utils*
+        state: present
+    - name: Start and Enable nfs
+      service:
+        name: nfs
+        state: started
+        enabled: yes
+
+    - name: Ensure rpcbind is started and enabled. Centos6 only!
+      service:
+        name: rpcbind
+        state: started
+        enabled: yes
+
+    - name: showmount
+      shell: showmount -e 192.168.34.77
+   
+    - name: mkdir /share
+      file:
+        path: /share
+        state: directory
+        mode: '755'
+        owner: root
+        group: root
+
+    - name: mounting in /etc/fstab
+      lineinfile:
+        path: /etc/fstab
+        line: '192.168.34.77:/share   /share  nfs  defaults  0 0'
+        state: present
+
+    - name: mount
+      shell: 'mount -t nfs 192.168.34.77:/share /share'
+
+#    - name: mount -a
+#      shell: mount -a
+
+
+#    - name: mounting
+#      mount:
+#        src: 192.168.34.17:/share
+#        path: /share
+#        opts: defaults
+#        state: mounted    
+#        fstype: nfs
+#        dump: '0'
+#        passno: '0'
+
+
+

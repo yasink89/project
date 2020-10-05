@@ -1,0 +1,10 @@
+---
+- hosts: dockm
+  become: yes
+  remote_user: ansible
+  tasks:
+    - name: Pull portainer image
+      shell: docker pull portainer/portainer
+    - name: Run portainer
+      shell: docker run -d -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer
+  
